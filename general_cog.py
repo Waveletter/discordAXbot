@@ -12,4 +12,3 @@ class GeneralCog(commands.Cog, name="General"):
         Проверка доступности бота
         """
         await ctx.send(f'{ctx.author.mention} Pong :ping_pong:')
-

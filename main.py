@@ -1,7 +1,8 @@
 from bot_config import settings
 import discord
 from discord.ext import commands
-import argparse, logging, asyncio
+import logging
+import asyncio
 from general_cog import GeneralCog
 
 
