@@ -1,3 +1,4 @@
+import platform
 from bot_config import settings
 import discord
 from discord.ext import commands
@@ -5,6 +6,8 @@ import logging
 import asyncio
 from general_cog import GeneralCog
 from reports_cog import ReportsCog
+from colorama import Back, Fore, Style
+import time
 
 
 class BotHelp (commands.MinimalHelpCommand):
@@ -39,8 +42,13 @@ if __name__ == "__main__":
 
     @bot.event
     async def on_ready():
-        print(f'Logged in as {bot.user}')
+        prefix = (Fore.GREEN + time.strftime("%H:%M:%S UTC", time.gmtime()) + Back.RESET + Fore.WHITE + Style.BRIGHT)
+        print(f'{prefix} Logged in as {Fore.YELLOW + str(bot.user)}')
+        print(f'{prefix} Bot ID {Fore.YELLOW + str(bot.user.id)}')
+        print(f'{prefix} Discord Version {Fore.YELLOW + discord.__version__}')
+        print(f'{prefix} Python Version {Fore.YELLOW + str(platform.python_version())}')
+
 
     asyncio.run(init(bot))
-
-    bot.run(settings['token'])
+    log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
+    bot.run(settings['token'], log_handler=log_handler)

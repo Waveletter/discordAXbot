@@ -1,21 +1,21 @@
 import discord
 from discord.ext import commands
 import bot_config
-
+from colorama import Fore
 
 class GeneralCog(commands.Cog, name="General"):
 
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.hybrid_command()
     async def ping(self, ctx):
         """
         Проверка доступности бота
         """
         await ctx.reply(f'Pong :ping_pong:')
 
-    @commands.command()
+    @commands.command(name='builds')
     async def builds(self, ctx, *args):
         """
         Показать сборки кораблей. Разрешены категории 'ax', 'trade', 'pvp', 'pve', 'explore'
@@ -46,7 +46,7 @@ class GeneralCog(commands.Cog, name="General"):
             reply.update({i: list()})
 
         try:
-            with open(bot_config.settings['builds']) as builds:
+            with open(bot_config.settings['builds'], 'r') as builds:
                 for line in builds:
                     for cat in reply.keys():
                         if line.startswith(cat):
@@ -65,14 +65,14 @@ class GeneralCog(commands.Cog, name="General"):
 
         await ctx.reply(embed=embed)
 
-    #@commands.command()
+    #@commands.hybrid_command()
     async def preengineered(self, ctx):
         """
         Показать информацию о предмодифицированных модулях
         """
         pass
 
-    #@commands.command()
+    #@commands.hybrid_command()
     async def macros(self, ctx):
         """
         Набор макросов
@@ -85,3 +85,13 @@ class GeneralCog(commands.Cog, name="General"):
         Вывести интересующий график
         """
         pass
+
+    @commands.hybrid_command()
+    @commands.is_owner()
+    async def sync(self, ctx):
+        #TODO: разобраться почему не распознаёт команды для синхронизации
+        """Синхронизирует команды с сервером"""
+        print(f'Started syncing on {ctx.guild}')
+        synced = await self.bot.tree.sync(guild=ctx.guild)
+        print(f'{Fore.YELLOW + str(len(synced))} commands have been synced with {ctx.guild}')
+        await ctx.reply('Sync complete')

@@ -3,4 +3,5 @@ settings = {
  'bot': 'mybotname',
  'id': botid,
  'prefix': '!'
+ 'builds': 'builds.txt'
 }

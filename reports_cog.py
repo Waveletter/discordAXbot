@@ -14,19 +14,19 @@ class ReportsCog(commands.Cog, name='Reports'):
         """TODO:Отправить запрос в БД"""
         pass
 
-    @commands.command()
-    async def report_zone(self, ctx, *args):
+    @commands.hybrid_command()
+    async def report_zone(self, ctx):
         """
         Команда по передаче
         """
-        a = await self.parse_args(args)
+        a = await self.parse_args(None)
         status = await self.push_to_db(a)
         await ctx.reply(f'{ctx.author.mention} доложил о закрытии {status}')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def pstats(self, ctx, user=None):
         """
-        Команда выводит статистику по указанному игроку; по умолчанию выводит статистику по вызвавшему команду
+        Команда выводит статистику по указанному игроку
         """
         if user is None:
             await ctx.reply(f"Статистика {ctx.author.mention}")
