@@ -1,0 +1,6 @@
+settings = {
+ 'token': 'mytoken',
+ 'bot': 'mybotname',
+ 'id': botid,
+ 'prefix': '!'
+}

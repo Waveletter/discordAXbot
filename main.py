@@ -4,6 +4,7 @@ from discord.ext import commands
 import logging
 import asyncio
 from general_cog import GeneralCog
+from reports_cog import ReportsCog
 
 
 class BotHelp (commands.MinimalHelpCommand):
@@ -24,6 +25,7 @@ class BotHelp (commands.MinimalHelpCommand):
 async def init(bot):
     bot.help_command = BotHelp()
     await bot.add_cog(GeneralCog(bot))
+    await bot.add_cog(ReportsCog(bot))
     # await bot.start(settings['token']) # взаимозаменяемая конструкция?
     # await bot.wait_until_ready()
 

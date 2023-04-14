@@ -11,4 +11,33 @@ class GeneralCog(commands.Cog, name="General"):
         """
         Проверка доступности бота
         """
-        await ctx.send(f'{ctx.author.mention} Pong :ping_pong:')
+        await ctx.reply(f'Pong :ping_pong:')
+
+    @commands.command()
+    async def builds(self, ctx, category):
+        """
+        Показать сборки кораблей
+        """
+        pass
+
+    @commands.command()
+    async def preengineered(self, ctx):
+        """
+        Показать информацию о предмодифицированных модулях
+        """
+        pass
+
+    @commands.command()
+    async def macros(self, ctx):
+        """
+        Набор макросов
+        """
+        pass
+
+    @commands.command()
+    async def graphic(self, ctx, selection):
+        """
+        Вывести интересующий график
+        """
+        pass
+
