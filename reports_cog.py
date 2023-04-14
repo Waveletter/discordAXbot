@@ -24,7 +24,7 @@ class ReportsCog(commands.Cog, name='Reports'):
         await ctx.reply(f'{ctx.author.mention} доложил о закрытии {status}')
 
     @commands.command()
-    async def personalstats(self, ctx, user=None):
+    async def pstats(self, ctx, user=None):
         """
         Команда выводит статистику по указанному игроку; по умолчанию выводит статистику по вызвавшему команду
         """
