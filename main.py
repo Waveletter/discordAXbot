@@ -8,6 +8,7 @@ from general_cog import GeneralCog
 from reports_cog import ReportsCog, ZoneReportModal
 from colorama import Back, Fore, Style
 import time
+import interactions
 
 
 class BotHelp (commands.MinimalHelpCommand):
@@ -22,17 +23,17 @@ class BotHelp (commands.MinimalHelpCommand):
         await destination.send(embed=embed)
 
 
-# log_handler = logging.FileHandler(filename="bot.log", encoding='utf-8', mode='w')
-
-
 class BotClient(commands.Bot):
-    def __init__(self):
+    def __init__(self,):
         intent = discord.Intents.default()
         intent.message_content = True
         super().__init__(command_prefix=settings['prefix'], intents=intent)
         self.help_command = BotHelp()
-        asyncio.run(self.add_cog(GeneralCog(self)))
-        asyncio.run(self.add_cog(ReportsCog(self)))
+
+    def add_cogs(self, Cogs, Guilds):
+        for cog in Cogs:
+            asyncio.run(self.add_cog(cog, guilds=Guilds))
+
 
     async def on_ready(self):
         prefix = (Fore.GREEN + time.strftime("%H:%M:%S UTC", time.gmtime()) + Back.RESET + Fore.WHITE + Style.BRIGHT)
@@ -45,65 +46,13 @@ class BotClient(commands.Bot):
 if __name__ == "__main__":
     # initialize the bot
     bot = BotClient()
+    bot.add_cogs(Cogs=[GeneralCog(bot), ReportsCog(bot)], Guilds=[discord.Object(id=1090316883770740766)])
     log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
     @bot.tree.command(name='report_zone')
     async def report_zone(interaction: discord.Interaction):
         """Команда для составления отчёта по зоне"""
         await interaction.response.send_modal(ZoneReportModal())
-
-    @bot.tree.command(name='builds')
-    async def builds(interaction: discord.Interaction):
-
-        """
-        Показать сборки кораблей. Разрешены категории 'ax', 'trade', 'pvp', 'pve', 'explore'
-        """
-        args = interaction.command.parameters
-        allowed_cats = ['ax', 'trade', 'pvp', 'pve', 'explore', 'all']
-        category_description = {'ax': 'Сборки для противодействия таргоидам',
-                                'trade': 'Сборки для торговых кораблей',
-                                'pvp': 'Сборки для противодействия игрокам',
-                                'pve': 'Сборки для противодействия NPC',
-                                'explore': 'Сборки для исследования галактики'
-                                }
-        categories = list()
-        if args.count('all') > 0:
-            allowed_cats.pop(allowed_cats.index('all'))
-            categories = allowed_cats
-        elif len(args) == 0:
-            categories.append('ax')
-        else:
-            for category in args:
-                try:
-                    categories.append(allowed_cats[allowed_cats.index(category.lower())])
-                except ValueError:
-                    await interaction.response.send_message(f'Категории {category} не существует. Разрешённые категории: {allowed_cats}')
-                    return
-
-        reply = dict()
-        for i in categories:
-            reply.update({i: list()})
-
-        try:
-            with open(settings['builds'], 'r') as builds:
-                for line in builds:
-                    for cat in reply.keys():
-                        if line.startswith(cat):
-                            reply[cat].append(
-                                (line.strip().split(';'))[1:])  # append a pair of build name and build link
-        except Exception as ex:
-            await interaction.response.send_message(f'File error {ex}')
-            return
-
-        embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold(),
-                              description=f'Доступные категории: {allowed_cats}')
-        for category in reply.keys():
-            embed.add_field(name=f'{category.upper():-^40}', value=category_description[category], inline=False)
-            for record in reply[category]:
-                embed.add_field(name=record[0], value=f'[Link]({record[1]})', inline=False)
-
-        await interaction.response.send_message(embed=embed)
-
 
     for i in bot.tree.get_commands():
         print(f'{Fore.YELLOW + i.name} {Fore.WHITE + i.description}')
