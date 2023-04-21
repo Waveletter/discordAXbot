@@ -49,11 +49,6 @@ if __name__ == "__main__":
     bot.add_cogs(Cogs=[GeneralCog(bot), ReportsCog(bot)], Guilds=[discord.Object(id=1090316883770740766)])
     log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
-    @bot.tree.command(name='report_zone')
-    async def report_zone(interaction: discord.Interaction):
-        """Команда для составления отчёта по зоне"""
-        await interaction.response.send_modal(ZoneReportModal())
-
     for i in bot.tree.get_commands():
         print(f'{Fore.YELLOW + i.name} {Fore.WHITE + i.description}')
 

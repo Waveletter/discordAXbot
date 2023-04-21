@@ -50,6 +50,7 @@ class GeneralCog(commands.Cog, name="General"):
         print(f'{Fore.YELLOW + str(len(synced))} commands have been synced with {ctx.guild}')
         for cmd in synced:
             print(f'{Fore.CYAN + str(cmd) + Fore.RESET}')
+        await ctx.message.delete(delay=5)
         await ctx.reply(f'Sync complete; Synced {str(len(synced))} commands with current server')
 
     @commands.command(hidden=True)
@@ -61,6 +62,7 @@ class GeneralCog(commands.Cog, name="General"):
         print(f'{Fore.YELLOW + str(len(synced))} commands have been synced as global')
         for cmd in synced:
             print(f'{Fore.CYAN + str(cmd) + Fore.RESET}')
+        await ctx.message.delete(delay=5)
         await ctx.reply(f'Global sync complete; Synced {str(len(synced))} globally')
 
     @app_commands.command(name='builds')

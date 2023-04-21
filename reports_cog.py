@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from discord import ui
 import discord
 
@@ -55,3 +56,8 @@ class ReportsCog(commands.Cog, name='Reports'):
             await ctx.reply(f"Статистика {ctx.author.mention}")
         else:
             await ctx.reply(f"Статистика {user}")
+
+    @app_commands.command(name='report_zone')
+    async def report_zone(self, interaction: discord.Interaction):
+        """Команда для составления отчёта по зоне"""
+        await interaction.response.send_modal(ZoneReportModal())
