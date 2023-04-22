@@ -3,5 +3,7 @@ settings = {
  'bot': 'mybotname',
  'id': botid,
  'prefix': '!'
- 'builds': 'builds.txt'
+ 'builds': 'builds.txt',
+ 'db': 'bot_db.db',
+ 'guilds': [discord.Object(id=guildid)]
 }
