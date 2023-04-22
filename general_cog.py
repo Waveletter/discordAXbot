@@ -17,9 +17,6 @@ class GeneralCog(commands.Cog, name="General"):
         """
         await ctx.reply(f'Pong :ping_pong:')
 
-    @commands.command(name='builds')
-
-
     #@commands.hybrid_command()
     async def preengineered(self, ctx):
         """

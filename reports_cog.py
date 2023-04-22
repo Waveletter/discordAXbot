@@ -23,10 +23,17 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
                           style=discord.TextStyle.short)
 
 
-    def __init__(self, db=None):
+    def __init__(self, db_cursor):
         super().__init__()
-        self.db = db
+        self.cursor = db_cursor
+        self.table = 'zone_reports'
+        tables = self.cursor.execute("SELECT name FROM sqlite_master").fetchall()
+        if self.table not in tables:
+            self._create_table()
 
+
+    def _create_table(self):
+        self.cursor.execute(f"CREATE TABLE {self.table}(system,zone,builds,)")
     async def parse_args(self):
         """TODO:Пропарсить переданные аргументы, проверить на ошибки, вернуть словарь"""
         pass
@@ -42,9 +49,9 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
 
 
 class ReportsCog(commands.Cog, name='Reports'):
-    def __init__(self, bot, db=None):
+    def __init__(self, bot):
         self.bot = bot
-        self.db = db
+        self.db_cursor = self.bot.db_conn.cursor()
 
 
     @commands.hybrid_command()
@@ -60,4 +67,4 @@ class ReportsCog(commands.Cog, name='Reports'):
     @app_commands.command(name='report_zone')
     async def report_zone(self, interaction: discord.Interaction):
         """Команда для составления отчёта по зоне"""
-        await interaction.response.send_modal(ZoneReportModal())
+        await interaction.response.send_modal(ZoneReportModal(self.db_cursor))
