@@ -17,9 +17,6 @@ class GeneralCog(commands.Cog, name="General"):
         """
         await ctx.reply(f'Pong :ping_pong:')
 
-    @commands.command(name='builds')
-
-
     #@commands.hybrid_command()
     async def preengineered(self, ctx):
         """
@@ -50,6 +47,7 @@ class GeneralCog(commands.Cog, name="General"):
         print(f'{Fore.YELLOW + str(len(synced))} commands have been synced with {ctx.guild}')
         for cmd in synced:
             print(f'{Fore.CYAN + str(cmd) + Fore.RESET}')
+        await ctx.message.delete(delay=5)
         await ctx.reply(f'Sync complete; Synced {str(len(synced))} commands with current server')
 
     @commands.command(hidden=True)
@@ -61,6 +59,8 @@ class GeneralCog(commands.Cog, name="General"):
         print(f'{Fore.YELLOW + str(len(synced))} commands have been synced as global')
         for cmd in synced:
             print(f'{Fore.CYAN + str(cmd) + Fore.RESET}')
+
+        await ctx.message.delete(delay=5)
         await ctx.reply(f'Global sync complete; Synced {str(len(synced))} globally')
 
     @app_commands.command(name='builds')
@@ -115,12 +115,8 @@ class GeneralCog(commands.Cog, name="General"):
             await interaction.response.send_message(f'File error {ex}')
             return
 
-        cat_str = ''    #Просто для красивого вывода категорий
-        for i in allowed_cats:
-            cat_str += ' ' + i
 
-        embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold(),
-                              description=f'Доступные категории: {cat_str}')
+        embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold())
         for category in reply.keys():
             embed.add_field(name=f'{category.upper():-^40}', value=category_description[category], inline=False)
             for record in reply[category]:

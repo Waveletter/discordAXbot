@@ -8,7 +8,9 @@ from general_cog import GeneralCog
 from reports_cog import ReportsCog, ZoneReportModal
 from colorama import Back, Fore, Style
 import time
-import interactions
+
+import sqlite3
+
 
 
 class BotHelp (commands.MinimalHelpCommand):
@@ -24,16 +26,15 @@ class BotHelp (commands.MinimalHelpCommand):
 
 
 class BotClient(commands.Bot):
-    def __init__(self,):
-        intent = discord.Intents.default()
-        intent.message_content = True
-        super().__init__(command_prefix=settings['prefix'], intents=intent)
-        self.help_command = BotHelp()
 
-    def add_cogs(self, Cogs, Guilds):
-        for cog in Cogs:
-            asyncio.run(self.add_cog(cog, guilds=Guilds))
+    def __init__(self, command_prefix, intent, help, db):
+        super().__init__(command_prefix=command_prefix, intents=intent)
+        self.help_command = help
+        self.db_conn = sqlite3.connect(db)
 
+    def add_cogs(self, cogs, guilds):
+        for cog in cogs:
+            asyncio.run(self.add_cog(cog, guilds=guilds))
 
     async def on_ready(self):
         prefix = (Fore.GREEN + time.strftime("%H:%M:%S UTC", time.gmtime()) + Back.RESET + Fore.WHITE + Style.BRIGHT)
@@ -45,14 +46,12 @@ class BotClient(commands.Bot):
 
 if __name__ == "__main__":
     # initialize the bot
-    bot = BotClient()
-    bot.add_cogs(Cogs=[GeneralCog(bot), ReportsCog(bot)], Guilds=[discord.Object(id=1090316883770740766)])
-    log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
-    @bot.tree.command(name='report_zone')
-    async def report_zone(interaction: discord.Interaction):
-        """Команда для составления отчёта по зоне"""
-        await interaction.response.send_modal(ZoneReportModal())
+    intent = discord.Intents.default()
+    intent.message_content = True
+    bot = BotClient(command_prefix=settings['prefix'], intent=intent, help=BotHelp(), db=settings['db'])
+    bot.add_cogs(cogs=[GeneralCog(bot), ReportsCog(bot)], guilds=settings['guilds'])
+    log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
     for i in bot.tree.get_commands():
         print(f'{Fore.YELLOW + i.name} {Fore.WHITE + i.description}')
