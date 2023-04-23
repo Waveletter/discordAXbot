@@ -1,3 +1,10 @@
+import discord
+import sqlite3
+
+def create_zone_reports_table(db_conn):
+ pass
+
+
 settings = {
  'token': 'mytoken',
  'bot': 'mybotname',
@@ -5,5 +12,6 @@ settings = {
  'prefix': '!'
  'builds': 'builds.txt',
  'db': 'bot_db.db',
+ 'tables': {'zone_reports': create_zone_reports_table},
  'guilds': [discord.Object(id=guildid)]
 }
