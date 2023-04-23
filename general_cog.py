@@ -114,12 +114,8 @@ class GeneralCog(commands.Cog, name="General"):
             await interaction.response.send_message(f'File error {ex}')
             return
 
-        cat_str = ''    #Просто для красивого вывода категорий
-        for i in allowed_cats:
-            cat_str += ' ' + i
 
-        embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold(),
-                              description=f'Доступные категории: {cat_str}')
+        embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold())
         for category in reply.keys():
             embed.add_field(name=f'{category.upper():-^40}', value=category_description[category], inline=False)
             for record in reply[category]:

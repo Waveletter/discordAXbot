@@ -29,9 +29,9 @@ class BotClient(commands.Bot):
         self.help_command = help
         self.db_conn = sqlite3.connect(db)
 
-    def add_cogs(self, Cogs, Guilds):
-        for cog in Cogs:
-            asyncio.run(self.add_cog(cog, guilds=Guilds))
+    def add_cogs(self, cogs, guilds):
+        for cog in cogs:
+            asyncio.run(self.add_cog(cog, guilds=guilds))
 
     async def on_ready(self):
         prefix = (Fore.GREEN + time.strftime("%H:%M:%S UTC", time.gmtime()) + Back.RESET + Fore.WHITE + Style.BRIGHT)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     intent = discord.Intents.default()
     intent.message_content = True
     bot = BotClient(command_prefix=settings['prefix'], intent=intent, help=BotHelp(), db=settings['db'])
-    bot.add_cogs(Cogs=[GeneralCog(bot), ReportsCog(bot)], Guilds=settings['guilds'])
+    bot.add_cogs(cogs=[GeneralCog(bot), ReportsCog(bot)], guilds=settings['guilds'])
     log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
     for i in bot.tree.get_commands():
