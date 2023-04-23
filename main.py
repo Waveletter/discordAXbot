@@ -8,7 +8,9 @@ from general_cog import GeneralCog
 from reports_cog import ReportsCog, ZoneReportModal
 from colorama import Back, Fore, Style
 import time
+
 import sqlite3
+
 
 
 class BotHelp (commands.MinimalHelpCommand):
@@ -24,6 +26,7 @@ class BotHelp (commands.MinimalHelpCommand):
 
 
 class BotClient(commands.Bot):
+
     def __init__(self, command_prefix, intent, help, db):
         super().__init__(command_prefix=command_prefix, intents=intent)
         self.help_command = help
@@ -43,6 +46,7 @@ class BotClient(commands.Bot):
 
 if __name__ == "__main__":
     # initialize the bot
+
     intent = discord.Intents.default()
     intent.message_content = True
     bot = BotClient(command_prefix=settings['prefix'], intent=intent, help=BotHelp(), db=settings['db'])
