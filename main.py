@@ -5,7 +5,8 @@ from discord.ext import commands
 import logging
 import asyncio
 from general_cog import GeneralCog
-from reports_cog import ReportsCog, ZoneReportModal
+from reports_cog import ReportsCog
+from fun_cog import MiscCog
 from colorama import Back, Fore, Style
 import time
 import sqlite3
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     intent = discord.Intents.default()
     intent.message_content = True
     bot = BotClient(command_prefix=settings['prefix'], intent=intent, help=BotHelp(), db=settings['db'])
-    bot.add_cogs(cogs=[GeneralCog(bot), ReportsCog(bot)], guilds=settings['guilds'])
+    bot.add_cogs(cogs=[GeneralCog(bot), ReportsCog(bot), MiscCog(bot)], guilds=settings['guilds'])
     log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
 
     for i in bot.tree.get_commands():

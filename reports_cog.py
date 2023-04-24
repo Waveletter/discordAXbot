@@ -1,5 +1,3 @@
-import sqlite3
-
 from discord.ext import commands
 from discord import app_commands
 from discord import ui
@@ -77,11 +75,12 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
     async def on_submit(self, interaction: discord.Interaction, /) -> None:
         a = await self.parse_args(interaction.user.id, interaction.guild.id)
         status = await self.push_to_db(a)
-        #TODO: разобраться с вебхуками и че каво с ними можно сделать чтобы работал followup
-        #await interaction.followup.send(
-        #    f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}')
-        await interaction.response.send_message(f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}\n{len(self.manager.fetch_reports(user=interaction.user.id, guild=interaction.guild.id))} отчётов ожидают подтверждения',
-                                                ephemeral=False)
+        # Чтобы инициализировать вебхук, нужно предварительно использовать response.defer()
+        await interaction.response.defer()
+        await interaction.followup.send(
+            f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}')
+        await interaction.followup.send(f'{len(self.manager.fetch_reports(user=interaction.user.id, guild=interaction.guild.id))} отчётов ожидают подтверждения',
+                                                ephemeral=True)
 
 
 class ReportsCog(commands.Cog, name='Reports'):
@@ -102,3 +101,6 @@ class ReportsCog(commands.Cog, name='Reports'):
     async def report_zone(self, interaction: discord.Interaction) -> None:
         """Команда для составления отчёта по зоне"""
         await interaction.response.send_modal(ZoneReportModal(ReportManager(database=self.bot.db_conn)))
+
+
+
