@@ -243,7 +243,7 @@ class ReportManager(object, metaclass=MetaSingleton):
 
     def commit_report(self, *, user: int, guild: int, amount: int = 1) -> None:
         """
-
+        Добавить
         :param user: user id
         :param guild: guild id
         :param amount: amount
@@ -258,6 +258,14 @@ class ReportManager(object, metaclass=MetaSingleton):
             reports.get().write_to_db(self.db_conn.cursor())
             self._used_space -= 1
 
+    def replace_report(self, *, report: Report, index: int, user_id: int, guild_id: int) -> None:
+        """Заменяет отчёт"""
+        if not self.is_present(uid=user_id, gid=guild_id):
+            raise KeyError('No such reports')
+        if index < 0 or index > len(self.fetch_reports(user_id=user_id, guild_id=guild_id)):
+            raise IndexError('Index error')
+        self._storage[guild_id][user_id][index] = report
+
     def fetch_reports(self, *, user_id: int, guild_id: int) -> tuple:
         """
         Возвращает сохранённые в кеше отчёты пользователя
@@ -269,6 +277,13 @@ class ReportManager(object, metaclass=MetaSingleton):
             return tuple(self._storage[guild_id][user_id])
         else:
             return tuple()
+
+    def fetch_report(self, *, user_id: int, guild_id: int, index: int) -> Report:
+        if (self.is_present(user_id, guild_id) is True):
+            return self._storage[guild_id][user_id][index]
+        else:
+            print(f'Did not find the report')
+            return None
 
     def fetch_guilds(self) -> tuple:
         return tuple(self._storage.keys())

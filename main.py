@@ -14,7 +14,6 @@ import reports
 import sqlite3
 
 
-
 class BotHelp (commands.MinimalHelpCommand):
     """
     Minimal class for printing help in embed
