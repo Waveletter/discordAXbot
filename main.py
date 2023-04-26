@@ -9,6 +9,7 @@ from reports_cog import ReportsCog
 from fun_cog import MiscCog
 from colorama import Back, Fore, Style
 import time
+import reports
 
 import sqlite3
 
@@ -53,8 +54,9 @@ if __name__ == "__main__":
     bot = BotClient(command_prefix=settings['prefix'], intent=intent, help=BotHelp(), db=settings['db'])
     bot.add_cogs(cogs=[GeneralCog(bot), ReportsCog(bot), MiscCog(bot)], guilds=settings['guilds'])
     log_handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
+    report_manager = reports.ReportManager(database=bot.db_conn, tables=settings['tables'], guilds=settings['guilds'])
 
     for i in bot.tree.get_commands():
-        print(f'{Fore.YELLOW + i.name} {Fore.WHITE + i.description}')
+        print(f'{Fore.YELLOW + i.name} {Fore.WHITE + i.description + Fore.RESET}')
 
     bot.run(settings['token'], log_handler=log_handler)

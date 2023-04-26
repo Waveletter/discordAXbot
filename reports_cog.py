@@ -33,14 +33,17 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
         super().__init__()
         self.manager = rep_manager
 
-    async def parse_args(self, user_id: int, guild_id: int) -> ZoneReport:
+    async def parse_args(self, *, user: str, guild: str, user_id: int, guild_id: int) -> ZoneReport:
         """Пропарсит переданные аргументы, вернёт ZoneReport"""
         # TODO: добавить проверку входных данных!!
         report = ZoneReport()
-        report.user = user_id
-        report.guild = guild_id
+        report.user_id = user_id
+        report.guild_id = guild_id
         report.date = datetime.datetime.now()
+        report.user = user
+        report.guild = guild
         report.zone_type = self.zonetype.value.strip().upper()
+        report.place = self.place.value.strip().upper()
 
         participants = dict()
         for player in self.participants.value.strip().split(';'):
@@ -73,13 +76,14 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
         self.manager.add_report(report)
 
     async def on_submit(self, interaction: discord.Interaction, /) -> None:
-        a = await self.parse_args(interaction.user.id, interaction.guild.id)
+        a = await self.parse_args(user=interaction.user.nick, guild=interaction.guild.name,
+                                  user_id=interaction.user.id, guild_id=interaction.guild.id)
         status = await self.push_to_db(a)
         # Чтобы инициализировать вебхук, нужно предварительно использовать response.defer()
         await interaction.response.defer()
         await interaction.followup.send(
-            f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}')
-        await interaction.followup.send(f'{len(self.manager.fetch_reports(user=interaction.user.id, guild=interaction.guild.id))} отчётов ожидают подтверждения',
+            f'{interaction.user.mention} передал информацию о закрытии зоны в местности "{self.place.value}"')
+        await interaction.followup.send(f'{len(self.manager.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id))} отчёт(а)(ов) ожидают подтверждения',
                                                 ephemeral=True)
 
 
@@ -97,10 +101,22 @@ class ReportsCog(commands.Cog, name='Reports'):
         else:
             await ctx.reply(f"Статистика {user}")
 
-    @app_commands.command(name='report_zone')
+    @app_commands.command(name='report_zone', description='Команда для составления отчёта по зоне')
     async def report_zone(self, interaction: discord.Interaction) -> None:
         """Команда для составления отчёта по зоне"""
         await interaction.response.send_modal(ZoneReportModal(ReportManager(database=self.bot.db_conn)))
+
+    @app_commands.command(name='show_reports', description='Выведет отчёты пользователя, подготовленные к отправке')
+    async def show_reports(self, interaction: discord.Interaction) -> None:
+        """Выведет отчёты пользователя, подготовленные к отправке"""
+        stashed_reports = ReportManager().fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id)
+        await interaction.response.defer(ephemeral=True)
+        if len(stashed_reports) == 0:
+            await interaction.followup.send(f'У вас не подготовлено отчётов', ephemeral=True)
+        else:
+            index = 0
+            for report in stashed_reports:
+                await interaction.followup.send(f'Рапорт #{index}', embed=report.construct_embed(), ephemeral=True)
 
 
 
