@@ -50,8 +50,8 @@ class CommitButton(ReportButton):
                          report_manager=report_manager, index=index)
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        self.report_manager.commit_report(user=self.uid, guild=self.gid, index=self.index)
-        await interaction.response.send_message(f'Отчёт #{self.index} игрока {interaction.user.mention} отправлен')
+        report = self.report_manager.commit_report(user=self.uid, guild=self.gid, index=self.index)
+        await interaction.response.send_message(f'Отчёт #{self.index} игрока {report.user} отправлен')
 
 
 class AmendButton(ReportButton):
@@ -64,6 +64,9 @@ class AmendButton(ReportButton):
         report = self.report_manager.fetch_report(user_id=self.uid, guild_id=self.gid, index=self.index)
         modal = report.construct_modal()
         modal.set_index(self.index)
+        modal.set_uid(self.uid)
+        modal.set_gid(self.gid)
+        modal.title = f'Отчёт {report.user}'
 
         await interaction.response.send_modal(modal)
 
@@ -75,8 +78,8 @@ class DeleteButton(ReportButton):
                          report_manager=report_manager, index=index)
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        self.report_manager.remove_report(user_id=self.uid, guild_id=self.gid, index=self.index)
-        await interaction.response.send_message(f'Отчёт #{self.index} игрока {interaction.user.mention} удалён')
+        report = self.report_manager.remove_report(user_id=self.uid, guild_id=self.gid, index=self.index)
+        await interaction.response.send_message(f'Отчёт #{self.index} игрока {report.user} удалён')
 
 
 class ReportsCog(commands.Cog, name='Reports'):
@@ -98,8 +101,8 @@ class ReportsCog(commands.Cog, name='Reports'):
         """Команда для составления отчёта по зоне"""
         await interaction.response.send_modal(ZoneReportModal(ReportManager(database=self.bot.db_conn)))
 
-    @app_commands.command(name='show_reports', description='Выведет отчёты пользователя, подготовленные к отправке')
-    async def show_reports(self, interaction: discord.Interaction) -> None:
+    @app_commands.command(name='my_reports', description='Выведет отчёты пользователя, подготовленные к отправке')
+    async def my_reports(self, interaction: discord.Interaction) -> None:
         """Выведет отчёты пользователя, подготовленные к отправке"""
         repo_man = ReportManager()
         stashed_reports = repo_man.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id)
@@ -126,6 +129,31 @@ class ReportsCog(commands.Cog, name='Reports'):
                 await interaction.followup.send(f'Рапорт #{index}', embed=report.construct_embed(),
                                                 ephemeral=True, view=view)
                 index += 1
+
+    @app_commands.command(name='show_reports', description='Выведет все отчёты данного сервера, подготовленные к отправке')
+    async def show_reports(self, interaction: discord.Interaction) -> None:
+        """Выведет все отчёты данного сервера, подготовленные к отправке"""
+        report_man = ReportManager()
+        gid = interaction.guild.id
+        try:
+            users = report_man.fetch_guild_users(gid)
+        except KeyError:
+            await interaction.response.send_message(f'Отчётов не подготовлено', ephemeral=True)
+
+        await interaction.response.defer(ephemeral=True)
+
+        report_lists = list()
+        for user in users:
+            report_lists.append(report_man.fetch_reports(user_id=user, guild_id=gid))
+
+        for report_list in report_lists:
+            index = 0
+            for report in report_list:
+                response = f'Отчёт #{index} игрока {report.user}'
+                await interaction.followup.send(response, embed=report.construct_embed(), ephemeral=True)
+                index += 1
+
+
 
 
 

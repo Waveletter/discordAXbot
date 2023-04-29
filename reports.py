@@ -180,39 +180,43 @@ class ReportManager(object, metaclass=MetaSingleton):
         else:
             self.commit_report(user=report.user_id, guild=report.guild_id)
 
-    def commit_report(self, *, user: int, guild: int, index: int = 0, amount: int = 1) -> None:
+    def commit_report(self, *, user: int, guild: int, index: int = 0, amount: int = 1) -> Report:
         """
         Отправляет репорт в БД
         :param user: user id
         :param guild: guild id
         :param amount: amount
         :param index: report index
-        :return:
+        :return: last report committed
         """
         if amount > self._storage[guild][user].qsize():
             raise IndexError('Tried to commit too many reports')
 
         reports = self._storage[guild][user]
+        last_committed = None
         for index in range(index, index + amount):
             print(f'{Fore.CYAN}Report committed!')
-            reports.pop(index).write_to_db(self.db_conn.cursor())
+            last_committed = reports.pop(index).write_to_db(self.db_conn.cursor())
             self._used_space -= 1
 
-    def replace_report(self, *, report: Report, index: int, user_id: int, guild_id: int) -> None:
+        return last_committed
+
+    def replace_report(self, *, report: Report, index: int, user_id: int, guild_id: int) -> Report:
         """Заменяет отчёт"""
         if not self.is_present(uid=user_id, gid=guild_id):
             raise KeyError('No such reports')
         if index < 0 or index > len(self.fetch_reports(user_id=user_id, guild_id=guild_id)):
             raise IndexError('Index error')
         self._storage[guild_id][user_id][index] = report
+        return report
 
-    def remove_report(self, *, index: int, user_id: int, guild_id: int) -> None:
+    def remove_report(self, *, index: int, user_id: int, guild_id: int) -> Report:
         """Удаляет рапорт из очереди"""
         if not self.is_present(uid=user_id, gid=guild_id):
             raise KeyError('No such reports')
         if index < 0 or index > len(self.fetch_reports(user_id=user_id, guild_id=guild_id)):
             raise IndexError('Index error')
-        self._storage[guild_id][user_id].pop(index)
+        return self._storage[guild_id][user_id].pop(index)
 
     def fetch_reports(self, *, user_id: int, guild_id: int) -> tuple:
         """
@@ -266,18 +270,26 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
                           default='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
                           style=discord.TextStyle.long)
     spawns = ui.TextInput(label='Тип таргоида:Количество;',
-                          default='S:43;C:4;B:2;M:0;H:2',
+                          default='Scout:43;Cyclops:4;Basilisk:2;Medusa:0;Hydra:2',
                           style=discord.TextStyle.short)
 
     # По умолчанию инициализироваться из настроек
     def __init__(self, rep_manager=ReportManager(database=sqlite3.connect(settings['db']), tables=settings['tables']),
-                 report_to_edit: int = None):
+                 report_to_edit: int = None, uid: int = None, gid: int = None):
         super().__init__()
         self.manager = rep_manager
         self.report_to_edit = report_to_edit
+        self.user_id = uid
+        self.guild_id = gid
 
     def set_index(self, value: int) -> None:
         self.report_to_edit = value
+
+    def set_uid(self, uid: int) -> None:
+        self.user_id = uid
+
+    def set_gid(self, gid: int) -> None:
+        self.guild_id = gid
 
     def set_place_plh(self, value: str) -> None:
         self.place.placeholder = value
@@ -309,13 +321,16 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
     def set_spawns(self, value: str) -> None:
         self.spawns.default = value
 
-    async def parse_args(self, *, user: str, guild: str, user_id: int, guild_id: int) -> ZoneReport:
+    async def parse_args(self, *, user: str, guild: str, user_id: int, guild_id: int, date: datetime.datetime = None) -> ZoneReport:
         """Пропарсит переданные аргументы, вернёт ZoneReport"""
         # TODO: добавить проверку входных данных!!
         report = ZoneReport()
         report.user_id = user_id
         report.guild_id = guild_id
-        report.date = datetime.datetime.now()
+        if date is None:
+            report.date = datetime.datetime.now()
+        else:
+            report.date = date
         report.user = user
         report.guild = guild
         report.zone_type = self.zonetype.value.strip().upper()
@@ -359,10 +374,27 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
             print('Pushed a report')
 
     async def on_submit(self, interaction: discord.Interaction, /) -> None:
-        a = await self.parse_args(user=interaction.user.nick, guild=interaction.guild.name,
-                                  user_id=interaction.user.id, guild_id=interaction.guild.id)
+        date = None
+        if self.report_to_edit is not None:
+            report = self.manager.fetch_report(user_id=self.user_id, guild_id=self.guild_id, index=self.report_to_edit)
+            name = report.user
+            gname = report.guild
+            uid = report.user_id
+            gid = report.guild_id
+            date = report.date
+        else:
+            if interaction.user.nick is None:
+                name = interaction.user.name
+            else:
+                name = f'{interaction.user.nick}({interaction.user.name})'
+            uid = interaction.user.id
+            gid = interaction.guild.id
+            gname = interaction.guild.name
 
-        status = await self.push_to_db(a)
+        report = await self.parse_args(user=name, guild=gname,
+                                  user_id=uid, guild_id=gid, date=date)
+
+        await self.push_to_db(report)
 
         # Чтобы инициализировать вебхук, нужно предварительно использовать response.defer()
         await interaction.response.defer()
@@ -370,7 +402,7 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
             await interaction.followup.send(
                 f'{interaction.user.mention} передал информацию о закрытии зоны в местности "{self.place.value}"')
         else:
-            await interaction.followup.send(f'Отчёт #{self.report_to_edit} игрока {interaction.user.mention} исправлен')
+            await interaction.followup.send(f'Отчёт #{self.report_to_edit} игрока {report.user} исправлен')
         await interaction.followup.send(
             f'{len(self.manager.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id))} отчёт(а)(ов) ожидают подтверждения',
             ephemeral=True)
