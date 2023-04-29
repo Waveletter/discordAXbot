@@ -254,19 +254,19 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
     Модалка для обработки репортов по зонам. Выдаёт окно взаимодействия, в которое записываются результаты закрытия зоны
     """
     place = ui.TextInput(label='Система',
-                         placeholder='Sol',
+                         default='Sol',
                          style=discord.TextStyle.short)
     zonetype = ui.TextInput(label='Зона конфликта',
-                            placeholder='Малая интенсивность',
+                            default='Малая интенсивность',
                             style=discord.TextStyle.short)
     participants = ui.TextInput(label='Ник:сборка;',
-                                placeholder='Woruas:CH2mg2sg;komsiant:K5msc',
+                                default='Woruas:CH2mg2sg;komsiant:K5msc',
                                 style=discord.TextStyle.long)
     timers = ui.TextInput(label='Фаза зоны-Время;',
-                          placeholder='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
+                          default='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
                           style=discord.TextStyle.long)
     spawns = ui.TextInput(label='Тип таргоида:Количество;',
-                          placeholder='S:43;C:4;B:2;M:0;H:2',
+                          default='S:43;C:4;B:2;M:0;H:2',
                           style=discord.TextStyle.short)
 
     # По умолчанию инициализироваться из настроек
@@ -293,6 +293,21 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
 
     def set_spawns_plh(self, value: str) -> None:
         self.spawns.placeholder = value
+
+    def set_place(self, value: str) -> None:
+        self.place.default = value
+
+    def set_zone(self, value: str) -> None:
+        self.zonetype.default = value
+
+    def set_participants(self, value: str) -> None:
+        self.participants.default = value
+
+    def set_timers(self, value: str) -> None:
+        self.timers.default = value
+
+    def set_spawns(self, value: str) -> None:
+        self.spawns.default = value
 
     async def parse_args(self, *, user: str, guild: str, user_id: int, guild_id: int) -> ZoneReport:
         """Пропарсит переданные аргументы, вернёт ZoneReport"""
@@ -411,20 +426,20 @@ class ZoneReport(Report):
     def construct_modal(self) -> ZoneReportModal:
         modal = ZoneReportModal()
         modal.title = f'Отчёт от {self.date}'
-        modal.set_place_plh(self.place)
-        modal.set_zone_plh(self.zone_type)
+        modal.set_place(self.place)
+        modal.set_zone(self.zone_type)
         srt = ''
         for i in self.participants.keys():
             srt += f'{i}:{self.participants[i]};'
-        modal.set_participants_plh(srt)
+        modal.set_participants(srt)
         srt = ''
         for i in self.timings.keys():
             srt += f'{i}-{self.timings[i]};'
-        modal.set_timers_plh(srt)
+        modal.set_timers(srt)
         srt = ''
         for i in self.tharg_counters.keys():
             srt += f'{i}:{self.tharg_counters[i]};'
-        modal.set_spawns_plh(srt)
+        modal.set_spawns(srt)
 
         return modal
 
