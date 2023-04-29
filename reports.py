@@ -1,15 +1,20 @@
 import sqlite3
-from typing import Type
+import typing
 
 import discord
 from bot_config import settings
 from colorama import Fore, Back, Style
 from discord import Embed
 import copy
+from discord import ui
+import datetime
+
+ZoneReport = typing.NewType('ZoneReport', None)  # Forward declaration
 
 
 class Queue:
-    """Название говорит само за себя.. пришлось накалякать по-быстрому"""
+    """"""
+
     def __init__(self, *, maxsize):
         super().__init__()
         self.maxsize = maxsize
@@ -27,6 +32,9 @@ class Queue:
     def get(self) -> object:
         return self.list.pop(0)
 
+    def pop(self, index: int) -> object:
+        return self.list.pop(index)
+
     def full(self) -> bool:
         return len(self.list) == self.maxsize
 
@@ -37,10 +45,15 @@ class Queue:
         self.list[key] = value
         return value
 
+    def qsize(self):
+        return len(self.list)
+
 
 class Report:
     """Базовый класс отчёта"""
-    def __init__(self, *, user: str = None, guild: str = None, user_id: int = None, guild_id: int = None, date=None, table: str = None) -> None:
+
+    def __init__(self, *, user: str = None, guild: str = None, user_id: int = None, guild_id: int = None, date=None,
+                 table: str = None) -> None:
         self.user_id = user_id
         self.guild_id = guild_id
         self.date = date
@@ -54,6 +67,18 @@ class Report:
         embed.add_field(name='Сервер', value=self.guild, inline=True)
         embed.add_field(name='Дата заполнения', value=self.date)
         return embed
+
+    def construct_modal(self) -> ui.Modal:
+        modal = ui.Modal()
+        modal.add_item(ui.TextInput(label='Пользователь', placeholder=self.user, style=discord.TextStyle.short))
+        modal.add_item(ui.TextInput(label='Сервер', placeholder=self.guild, style=discord.TextStyle.short))
+        modal.add_item(ui.TextInput(label='Дата заполнения', placeholder=self.date, style=discord.TextStyle.short))
+
+        async def placeholder():
+            pass
+
+        modal.on_submit = placeholder
+        return modal
 
     def write_to_db(self, cursor: sqlite3.Cursor) -> None:
         data = f'{self.user_id};{self.date};{self.guild_id}'
@@ -92,92 +117,6 @@ class Report:
         self._table = tb
 
 
-class ZoneReport(Report):
-    """Отчёт по зонам конфликта"""
-    def __init__(self, *, user: str = None, guild: str = None, user_id: int = None, guild_id: int = None, date=None, zonetype: str = None,
-                 wing_constitution: dict = None, timings: dict = None, tharg_count: dict = None,
-                 table: str = 'zone_reports', place: str = None) -> None:
-        super().__init__(user=user, guild=guild, user_id=user_id, guild_id=guild_id, date=date, table=table)
-        self.zone_type = zonetype
-        self.participants = wing_constitution
-        self.timings = timings
-        self.tharg_counters = tharg_count
-        self.place = place
-
-    def write_to_db(self, cursor: sqlite3.Cursor) -> None:
-        pass
-
-    def construct_embed(self) -> Embed:
-        embed = discord.Embed()
-        embed.add_field(name='Пользователь', value=self.user, inline=True)
-        embed.add_field(name='Сервер', value=self.guild)
-        embed.add_field(name='Дата заполнения', value=self.date)
-        embed.add_field(name='Место', value=self.place)
-        embed.add_field(name='Тип зоны', value=self.zone_type)
-        if len(self.participants.keys()) == 0:
-            embed.add_field(name='Участники', value='Не удалось разобрать строку')
-        else:
-            val_str = ''
-            for player in self.participants.keys():
-                val_str += f'{player}({self.participants[player]});\n'
-            embed.add_field(name='Участники', value=val_str)
-        if len(self.timings.keys()) < 3:
-            embed.add_field(name='Временные отсечки', value='Не удалось разобрать строку')
-        else:
-            val_str = ''
-            for timetype in self.timings.keys():
-                val_str += f'{timetype}: {self.timings[timetype]} ;\n'
-            embed.add_field(name='Временные отсечки', value=val_str)
-        if len(self.tharg_counters.keys()) == 0:
-            embed.add_field(name='Замеченные таргоиды', value='Не удалось разобрать строку')
-        else:
-            val_str = ''
-            for tharg_type in self.tharg_counters.keys():
-                val_str += f'{tharg_type} : {self.tharg_counters[tharg_type]} ;\n'
-            embed.add_field(name='Замеченные таргоиды', value=val_str)
-        return embed
-
-    @property
-    def zone_type(self) -> str:
-        return self._zone_type
-
-    @zone_type.setter
-    def zone_type(self, zone: str) -> None:
-        self._zone_type = zone
-
-    @property
-    def participants(self) -> dict:
-        return self._participants
-
-    @participants.setter
-    def participants(self, new_p: dict) -> None:
-        self._participants = copy.deepcopy(new_p)
-
-    @property
-    def timings(self) -> dict:
-        return self._timings
-
-    @timings.setter
-    def timings(self, times: dict) -> None:
-        self._timings = copy.deepcopy(times)
-
-    @property
-    def tharg_counters(self) -> dict:
-        return self._tharg_counters
-
-    @tharg_counters.setter
-    def tharg_counters(self, tc: dict) -> None:
-        self._tharg_counters = copy.deepcopy(tc)
-
-    @property
-    def place(self) -> str:
-        return self._place
-
-    @place.setter
-    def place(self, value: str) -> None:
-        self._place = value
-
-
 class MetaSingleton(type):
     _instances = {}
 
@@ -195,7 +134,7 @@ class ReportManager(object, metaclass=MetaSingleton):
 
     REPORT_LIMIT_PER_USER = 20  # Ограничение по количеству хранимых в памяти репортов для того чтобы не забить всю
     # память репортами
-    #REPORT_LIMIT_PER_GUILD = 1000
+    # REPORT_LIMIT_PER_GUILD = 1000
     TOTAL_LIMIT = 3000
 
     def __init__(self, database: sqlite3.Connection = None, tables: dict = settings['tables'], reset: bool = False,
@@ -241,21 +180,22 @@ class ReportManager(object, metaclass=MetaSingleton):
         else:
             self.commit_report(user=report.user_id, guild=report.guild_id)
 
-    def commit_report(self, *, user: int, guild: int, amount: int = 1) -> None:
+    def commit_report(self, *, user: int, guild: int, index: int = 0, amount: int = 1) -> None:
         """
-        Добавить
+        Отправляет репорт в БД
         :param user: user id
         :param guild: guild id
         :param amount: amount
+        :param index: report index
         :return:
         """
         if amount > self._storage[guild][user].qsize():
             raise IndexError('Tried to commit too many reports')
 
         reports = self._storage[guild][user]
-        for index in range(amount):
+        for index in range(index, index + amount):
             print(f'{Fore.CYAN}Report committed!')
-            reports.get().write_to_db(self.db_conn.cursor())
+            reports.pop(index).write_to_db(self.db_conn.cursor())
             self._used_space -= 1
 
     def replace_report(self, *, report: Report, index: int, user_id: int, guild_id: int) -> None:
@@ -265,6 +205,14 @@ class ReportManager(object, metaclass=MetaSingleton):
         if index < 0 or index > len(self.fetch_reports(user_id=user_id, guild_id=guild_id)):
             raise IndexError('Index error')
         self._storage[guild_id][user_id][index] = report
+
+    def remove_report(self, *, index: int, user_id: int, guild_id: int) -> None:
+        """Удаляет рапорт из очереди"""
+        if not self.is_present(uid=user_id, gid=guild_id):
+            raise KeyError('No such reports')
+        if index < 0 or index > len(self.fetch_reports(user_id=user_id, guild_id=guild_id)):
+            raise IndexError('Index error')
+        self._storage[guild_id][user_id].pop(index)
 
     def fetch_reports(self, *, user_id: int, guild_id: int) -> tuple:
         """
@@ -279,7 +227,7 @@ class ReportManager(object, metaclass=MetaSingleton):
             return tuple()
 
     def fetch_report(self, *, user_id: int, guild_id: int, index: int) -> Report:
-        if (self.is_present(user_id, guild_id) is True):
+        if self.is_present(user_id, guild_id) is True:
             return self._storage[guild_id][user_id][index]
         else:
             print(f'Did not find the report')
@@ -301,3 +249,221 @@ class ReportManager(object, metaclass=MetaSingleton):
         return True
 
 
+class ZoneReportModal(ui.Modal, title='Zone Report'):
+    """
+    Модалка для обработки репортов по зонам. Выдаёт окно взаимодействия, в которое записываются результаты закрытия зоны
+    """
+    place = ui.TextInput(label='Система',
+                         placeholder='Sol',
+                         style=discord.TextStyle.short)
+    zonetype = ui.TextInput(label='Зона конфликта',
+                            placeholder='Малая интенсивность',
+                            style=discord.TextStyle.short)
+    participants = ui.TextInput(label='Ник:сборка;',
+                                placeholder='Woruas:CH2mg2sg;komsiant:K5msc',
+                                style=discord.TextStyle.long)
+    timers = ui.TextInput(label='Фаза зоны-Время;',
+                          placeholder='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
+                          style=discord.TextStyle.long)
+    spawns = ui.TextInput(label='Тип таргоида:Количество;',
+                          placeholder='S:43;C:4;B:2;M:0;H:2',
+                          style=discord.TextStyle.short)
+
+    # По умолчанию инициализироваться из настроек
+    def __init__(self, rep_manager=ReportManager(database=sqlite3.connect(settings['db']), tables=settings['tables']),
+                 report_to_edit: int = None):
+        super().__init__()
+        self.manager = rep_manager
+        self.report_to_edit = report_to_edit
+
+    def set_index(self, value: int) -> None:
+        self.report_to_edit = value
+
+    def set_place_plh(self, value: str) -> None:
+        self.place.placeholder = value
+
+    def set_zone_plh(self, value: str) -> None:
+        self.zonetype.placeholder = value
+
+    def set_participants_plh(self, value: str) -> None:
+        self.participants.placeholder = value
+
+    def set_timers_plh(self, value: str) -> None:
+        self.timers.placeholder = value
+
+    def set_spawns_plh(self, value: str) -> None:
+        self.spawns.placeholder = value
+
+    async def parse_args(self, *, user: str, guild: str, user_id: int, guild_id: int) -> ZoneReport:
+        """Пропарсит переданные аргументы, вернёт ZoneReport"""
+        # TODO: добавить проверку входных данных!!
+        report = ZoneReport()
+        report.user_id = user_id
+        report.guild_id = guild_id
+        report.date = datetime.datetime.now()
+        report.user = user
+        report.guild = guild
+        report.zone_type = self.zonetype.value.strip().upper()
+        report.place = self.place.value.strip().upper()
+
+        participants = dict()
+        for player in self.participants.value.strip().split(';'):
+            pair = list(player.strip().split(':'))
+            if len(pair) < 2:
+                continue
+            participants.update({pair[0].strip(): pair[1].strip()})  # добавить игрока и его билд в словарь
+        report.participants = participants
+
+        timings = dict()
+        for item in self.timers.value.strip().split(';'):
+            pair = item.strip().split('-')
+            if len(pair) < 2:
+                continue
+            timings.update({pair[0].strip(): pair[1].strip()})
+        report.timings = timings
+
+        goids = dict()
+        for item in self.spawns.value.strip().split(';'):
+            pair = item.strip().split(':')
+            if len(pair) < 2:
+                continue
+            goids.update({pair[0].strip(): int(pair[1].strip())})
+        report.tharg_counters = goids
+
+        return report
+
+    async def push_to_db(self, report: Report, /) -> None:
+        """Отправляет рапорт в менеджер для дальнейшей отправки в БД"""
+        try:
+            if self.report_to_edit is None:
+                self.manager.add_report(report)
+            else:
+                self.manager.replace_report(report=report, index=self.report_to_edit,
+                                            user_id=report.user_id, guild_id=report.guild_id)
+        finally:
+            print('Pushed a report')
+
+    async def on_submit(self, interaction: discord.Interaction, /) -> None:
+        a = await self.parse_args(user=interaction.user.nick, guild=interaction.guild.name,
+                                  user_id=interaction.user.id, guild_id=interaction.guild.id)
+
+        status = await self.push_to_db(a)
+
+        # Чтобы инициализировать вебхук, нужно предварительно использовать response.defer()
+        await interaction.response.defer()
+        if self.report_to_edit is None:
+            await interaction.followup.send(
+                f'{interaction.user.mention} передал информацию о закрытии зоны в местности "{self.place.value}"')
+        else:
+            await interaction.followup.send(f'Отчёт #{self.report_to_edit} игрока {interaction.user.mention} исправлен')
+        await interaction.followup.send(
+            f'{len(self.manager.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id))} отчёт(а)(ов) ожидают подтверждения',
+            ephemeral=True)
+
+
+class ZoneReport(Report):
+    """Отчёт по зонам конфликта"""
+
+    def __init__(self, *, user: str = None, guild: str = None, user_id: int = None, guild_id: int = None, date=None,
+                 zonetype: str = None,
+                 wing_constitution: dict = None, timings: dict = None, tharg_count: dict = None,
+                 table: str = 'zone_reports', place: str = None) -> None:
+        super().__init__(user=user, guild=guild, user_id=user_id, guild_id=guild_id, date=date, table=table)
+        self.zone_type = zonetype
+        self.participants = wing_constitution
+        self.timings = timings
+        self.tharg_counters = tharg_count
+        self.place = place
+
+    def write_to_db(self, cursor: sqlite3.Cursor) -> None:
+        pass
+
+    def construct_embed(self) -> Embed:
+        embed = discord.Embed()
+        embed.add_field(name='Пользователь', value=self.user, inline=True)
+        embed.add_field(name='Сервер', value=self.guild)
+        embed.add_field(name='Дата заполнения', value=self.date)
+        embed.add_field(name='Место', value=self.place)
+        embed.add_field(name='Тип зоны', value=self.zone_type)
+        if len(self.participants.keys()) == 0:
+            embed.add_field(name='Участники', value='Не удалось разобрать строку')
+        else:
+            val_str = ''
+            for player in self.participants.keys():
+                val_str += f'{player}({self.participants[player]});\n'
+            embed.add_field(name='Участники', value=val_str)
+        if len(self.timings.keys()) < 3:
+            embed.add_field(name='Временные отсечки', value='Не удалось разобрать строку')
+        else:
+            val_str = ''
+            for timetype in self.timings.keys():
+                val_str += f'{timetype}: {self.timings[timetype]} ;\n'
+            embed.add_field(name='Временные отсечки', value=val_str)
+        if len(self.tharg_counters.keys()) == 0:
+            embed.add_field(name='Замеченные таргоиды', value='Не удалось разобрать строку')
+        else:
+            val_str = ''
+            for tharg_type in self.tharg_counters.keys():
+                val_str += f'{tharg_type} : {self.tharg_counters[tharg_type]} ;\n'
+            embed.add_field(name='Замеченные таргоиды', value=val_str)
+        return embed
+
+    def construct_modal(self) -> ZoneReportModal:
+        modal = ZoneReportModal()
+        modal.title = f'Отчёт от {self.date}'
+        modal.set_place_plh(self.place)
+        modal.set_zone_plh(self.zone_type)
+        srt = ''
+        for i in self.participants.keys():
+            srt += f'{i}:{self.participants[i]};'
+        modal.set_participants_plh(srt)
+        srt = ''
+        for i in self.timings.keys():
+            srt += f'{i}-{self.timings[i]};'
+        modal.set_timers_plh(srt)
+        srt = ''
+        for i in self.tharg_counters.keys():
+            srt += f'{i}:{self.tharg_counters[i]};'
+        modal.set_spawns_plh(srt)
+
+        return modal
+
+    @property
+    def zone_type(self) -> str:
+        return self._zone_type
+
+    @zone_type.setter
+    def zone_type(self, zone: str) -> None:
+        self._zone_type = zone
+
+    @property
+    def participants(self) -> dict:
+        return self._participants
+
+    @participants.setter
+    def participants(self, new_p: dict) -> None:
+        self._participants = copy.deepcopy(new_p)
+
+    @property
+    def timings(self) -> dict:
+        return self._timings
+
+    @timings.setter
+    def timings(self, times: dict) -> None:
+        self._timings = copy.deepcopy(times)
+
+    @property
+    def tharg_counters(self) -> dict:
+        return self._tharg_counters
+
+    @tharg_counters.setter
+    def tharg_counters(self, tc: dict) -> None:
+        self._tharg_counters = copy.deepcopy(tc)
+
+    @property
+    def place(self) -> str:
+        return self._place
+
+    @place.setter
+    def place(self, value: str) -> None:
+        self._place = value
