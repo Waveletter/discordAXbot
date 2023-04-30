@@ -3,7 +3,7 @@ from discord import app_commands
 import discord
 
 
-class MiscCog(commands.Cog, name="Miscellaneous"):
+class DebugCog(commands.Cog, name="Miscellaneous"):
     def __init__(self, bot):
         self.bot = bot
 
