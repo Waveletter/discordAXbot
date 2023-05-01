@@ -42,10 +42,10 @@ class BotClient(commands.Bot):
 
     async def on_ready(self):
         prefix = (Fore.GREEN + time.strftime("%H:%M:%S UTC", time.gmtime()) + Back.RESET + Fore.WHITE + Style.BRIGHT)
-        print(f'{prefix} Logged in as {Fore.YELLOW + str(self.user)}')
-        print(f'{prefix} Bot ID {Fore.YELLOW + str(self.user.id)}')
-        print(f'{prefix} Discord Version {Fore.YELLOW + discord.__version__}')
-        print(f'{prefix} Python Version {Fore.YELLOW + str(platform.python_version())}')
+        print(f'{prefix} Logged in as {Fore.YELLOW + str(self.user) + Fore.RESET}')
+        print(f'{prefix} Bot ID {Fore.YELLOW + str(self.user.id) + Fore.RESET}')
+        print(f'{prefix} Discord Version {Fore.YELLOW + discord.__version__ + Fore.RESET}')
+        print(f'{prefix} Python Version {Fore.YELLOW + str(platform.python_version()) + Fore.RESET}')
 
 
 @commands.command(name='get_gid', hidden=True)
