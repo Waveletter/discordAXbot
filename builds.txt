@@ -1,7 +1,7 @@
 How to add builds to the file:
-<category>;<build name>;<build link>
+<category>;<build name>;<build link>;<notation>
 
-ax;Meta Chieftain;https://edsy.org/s/vsTRpmR
+ax;Meta Chieftain;https://edsy.org/s/vsTRpmR;CH2m2s1rfl1stvb
 ax;Meta Krait MkII;https://edsy.org/#/L=HE00000H4C0S40,LYS20LYS20L3I10LYS20LYS20,CjwH02G_W0CjwH02G_W0CjwH02G_W0CjwH02G_W0,9onG05I_W0AAAG03K_W0APoG05I_W0AdsJ05J_W0AsOG02m_W0BAEH03L_W0BOmH05G_W0Bcg00,,25T006kK1016yG05I_W016yG05I_W00720013qG05I_W00KU1020m001-C00,Meta_0Krait_0MKII,AXIN
 ax;Basic Krait;https://edsy.org/s/vmqehHF
 ax;Human Weapons Krait MkII;https://edsy.org/#/L=HE00000H4C0S40,L5120L5120L5110L3X20L3X20,EAk10EBD10CjwH-2G002P000S_00CjwH-2G002P000S_00,9onG05I_W0AAAG05I_W0APoG05I_W0AdsJ05J_W0AsOG02m_W0BAEH03L_W0BOmH05G_W0Bcg00,,25T006kK1016yG05I_W016yG05I_W0072003Gm000KU1020n001-D00,GUN_0Krait_0MKII_0LE,DAKKA

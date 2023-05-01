@@ -119,7 +119,11 @@ class GeneralCog(commands.Cog, name="General"):
         embed = discord.Embed(title='Сборки кораблей по категориям', color=discord.Color.dark_gold())
         for category in reply.keys():
             embed.add_field(name=f'{category.upper():-^40}', value=category_description[category], inline=False)
+
             for record in reply[category]:
-                embed.add_field(name=record[0], value=f'[Link]({record[1]})', inline=False)
+                if len(record) > 2:
+                    embed.add_field(name=record[2], value=f'[{record[0]}]({record[1]})', inline=False)
+                else:
+                    embed.add_field(name=record[0], value=f'[Link to the build]({record[1]})', inline=False)
 
         await interaction.response.send_message(embed=embed)
