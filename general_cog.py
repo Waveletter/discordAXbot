@@ -15,7 +15,7 @@ class GeneralCog(commands.Cog, name="General"):
         """
         Проверка доступности бота
         """
-        await ctx.reply(f'Pong :ping_pong:')
+        await ctx.send(f'Pong :ping_pong:', delete_after=settings['timeout'])
 
     # @commands.hybrid_command()
     async def preengineered(self, ctx):
