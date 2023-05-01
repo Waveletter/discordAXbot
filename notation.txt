@@ -1,0 +1,38 @@
+
+
+ship;KRT;Krait MK II;Крайт МК II
+ship;CND;Anaconda;Анаконда
+ship;CHI;Alliance Chieftain;Атаман Альянса
+ship;CHL;Alliance Challenger;Претендент Альянса
+ship;FAS;Federal Assault Ship;Федеральный Штурмовой Корабль
+ship;FGS;Federal Gunship;Федеральный Ганшип
+ship;CUT;Imperial Cutter;Имперский Каттер
+ship;CLP;Imperial Clipper;Имперский Клиппер
+ship;COU;Imperial Courier;Имперский Курьер
+ship;FDL;Fer-de-Lance;Фер-де-Лансе
+ship;MMB;Mamba;Мамба
+ship;PHN;Krait Phantom;Крайт Фантом
+ship;CVT;Federal Corvette;Федеральный Корвет
+ship;VLT;Vulture;Гриф
+ship;T10;Type-10 Defender;Тип-10 Защитник
+ship;SDW;Sidewinder;Сайдвиндер
+
+weapon;eaxmc;Enhanced Anti-Xeno Multicannon;Улучшенная Анти-Инопланетянская Автопушка
+weapon;eaxmr;Enhanced Anti-Xeno Missile Rack;Улучшенный Блок Анти-Инопланетянских Ракет
+weapon;g;Guardian Gauss Cannon;Гаусс-Орудие Стражей
+weapon;sc;Guardian Shard Cannon;Осколочное Орудие Стражей
+weapon;pc;Guardian Plasma Cannon;Плазма-Орудие Стражей
+weapon;mg;Modified Guardian Gauss Cannon;Модифицированное Гаусс-Орудие Стражей
+weapon;msc;Modified Guardian Shard Cannon;Модифицированное Осколочное Орудие Стражей
+weapon;mpc;Modified Guardian Plasma Cannon;Модифицированное Плазма-Орудие Стражей
+weapon;tvb;Thermal Vent Beam Laser;Лучевой Лазер с Тепловым Сбросом
+weapon;rfl;Remote Release Flak Launcher;Флак-Орудие
+
+size;s;Small;Малое
+size;m;Medium;Среднее
+size;l;Large;Большое
+size;h;Huge;Огромное
+
+type;f;Fixed;Фиксированное
+type;g;Gimballed;Карданное
+type;t;Turreted;Турельное

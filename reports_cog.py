@@ -1,104 +1,151 @@
-import sqlite3
-
 from discord.ext import commands
 from discord import app_commands
-from discord import ui
-import discord
-import datetime
 from bot_config import settings
 from colorama import Fore, Back, Style
 from reports import *
 
 
-class ZoneReportModal(ui.Modal, title='Zone Report'):
-    """
-    Модалка для обработки репортов по зонам. Выдаёт окно взаимодействия, в которое записываются результаты закрытия зоны
-    """
-    place = ui.TextInput(label='Система',
-                         placeholder='Sol',
-                         style=discord.TextStyle.short)
-    zonetype = ui.TextInput(label='Зона конфликта',
-                            placeholder='Малая интенсивность',
-                            style=discord.TextStyle.short)
-    participants = ui.TextInput(label='Ник:сборка',
-                                placeholder='Woruas:CH2mg2sg;komsiant:K5msc',
-                                style=discord.TextStyle.long)
-    timers = ui.TextInput(label='Время закрытия',
-                          placeholder='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
-                          style=discord.TextStyle.long)
-    spawns = ui.TextInput(label='Количество и тип таргоидов',
-                          placeholder='S:43;C:4;B:2;M:0;H:2',
-                          style=discord.TextStyle.short)
+class ReportButton(discord.ui.Button):
+    """Базовый класс для создания кнопачек управления отчётами"""
+    def __init__(self, *, style=discord.ButtonStyle.secondary, label=None,
+                 disabled=False, custom_id=None, url=None, emoji=None, row=None,
+                 user_id: int = None, guild_id: int = None,
+                 report_manager: ReportManager = ReportManager(), index: int = None):
+        super().__init__(style=style, label=label, disabled=disabled,
+                         custom_id=custom_id, url=url, emoji=emoji, row=row)
+        self.uid = user_id
+        self.gid = guild_id
+        self.report_manager = report_manager
+        self.index = index
 
-    # По умолчанию инициализироваться из настроек
-    def __init__(self, rep_manager=ReportManager(database=sqlite3.connect(settings['db']), tables=settings['tables'])):
-        super().__init__()
-        self.manager = rep_manager
+    @property
+    def uid(self) -> int:
+        return self._uid
+        
+    @uid.setter
+    def uid(self, uid: int):
+        self._uid = uid
 
-    async def parse_args(self, user_id: int, guild_id: int) -> ZoneReport:
-        """Пропарсит переданные аргументы, вернёт ZoneReport"""
-        # TODO: добавить проверку входных данных!!
-        report = ZoneReport()
-        report.user = user_id
-        report.guild = guild_id
-        report.date = datetime.datetime.now()
-        report.zone_type = self.zonetype.value.strip().upper()
+    @property
+    def gid(self) -> int:
+        return self._gid
 
-        participants = dict()
-        for player in self.participants.value.strip().split(';'):
-            pair = list(player.strip().split(':'))
-            if len(pair) < 2:
-                continue
-            participants.update({pair[0].strip(): pair[1].strip()})  # добавить игрока и его билд в словарь
-        report.participants = participants
+    @gid.setter
+    def gid(self, gid: int):
+        self._gid = gid
 
-        timings = dict()
-        for item in self.timers.value.strip().split(';'):
-            pair = item.strip().split('-')
-            if len(pair) < 2:
-                continue
-            timings.update({pair[0].strip(): pair[1].strip()})
-        report.timings = timings
+    @property
+    def report_manager(self) -> ReportManager:
+        return self._repm
 
-        goids = dict()
-        for item in self.spawns.value.strip().split(';'):
-            pair = item.strip().split(':')
-            if len(pair) < 2:
-                continue
-            goids.update({pair[0].strip(): int(pair[1].strip())})
-        report.tharg_counters = goids
+    @report_manager.setter
+    def report_manager(self, repo: ReportManager):
+        self._repm = repo
 
-        return report
 
-    async def push_to_db(self, report: Report) -> None:
-        """Отправляет рапорт в менеджер для дальнейшей отправки в БД"""
-        self.manager.add_report(report)
+class CommitButton(ReportButton):
+    """"""
+    def __init__(self, *, user_id: int, guild_id: int, report_manager: ReportManager, index: int):
+        super().__init__(user_id=user_id, guild_id=guild_id, style=discord.ButtonStyle.green, label='Commit Report',
+                         report_manager=report_manager, index=index)
 
-    async def on_submit(self, interaction: discord.Interaction, /) -> None:
-        a = await self.parse_args(interaction.user.id, interaction.guild.id)
-        status = await self.push_to_db(a)
-        #TODO: разобраться с вебхуками и че каво с ними можно сделать чтобы работал followup
-        #await interaction.followup.send(
-        #    f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}')
-        await interaction.response.send_message(f'{interaction.user.mention} передал информацию о закрытии зоны {self.place.value}\n{len(self.manager.fetch_reports(user=interaction.user.id, guild=interaction.guild.id))} отчётов ожидают подтверждения',
-                                                ephemeral=False)
+    async def callback(self, interaction: discord.Interaction) -> None:
+        report = self.report_manager.commit_report(user=self.uid, guild=self.gid, index=self.index)
+        await interaction.response.send_message(f'Отчёт #{self.index} игрока {report.user} отправлен')
+
+
+class AmendButton(ReportButton):
+    """"""
+    def __init__(self, *, user_id: int, guild_id: int, report_manager: ReportManager, index: int):
+        super().__init__(user_id=user_id, guild_id=guild_id, style=discord.ButtonStyle.gray, label='Amend Report',
+                         report_manager=report_manager, index=index)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        report = self.report_manager.fetch_report(user_id=self.uid, guild_id=self.gid, index=self.index)
+        modal = report.construct_modal()
+        modal.set_index(self.index)
+        modal.set_uid(self.uid)
+        modal.set_gid(self.gid)
+        modal.title = f'Отчёт {report.user}'
+
+        await interaction.response.send_modal(modal)
+
+
+class DeleteButton(ReportButton):
+    """"""
+    def __init__(self, *, user_id: int, guild_id: int, report_manager: ReportManager, index: int):
+        super().__init__(user_id=user_id, guild_id=guild_id, style=discord.ButtonStyle.red, label='Delete Report',
+                         report_manager=report_manager, index=index)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        report = self.report_manager.remove_report(user_id=self.uid, guild_id=self.gid, index=self.index)
+        await interaction.response.send_message(f'Отчёт #{self.index} игрока {report.user} удалён')
 
 
 class ReportsCog(commands.Cog, name='Reports'):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
-    async def pstats(self, ctx, user=None) -> None:
-        """
-        Команда выводит статистику по указанному игроку
-        """
-        if user is None:
-            await ctx.reply(f"Статистика {ctx.author.mention}")
-        else:
-            await ctx.reply(f"Статистика {user}")
-
-    @app_commands.command(name='report_zone')
+    @app_commands.command(name='report_zone', description='Команда для составления отчёта по зоне')
     async def report_zone(self, interaction: discord.Interaction) -> None:
         """Команда для составления отчёта по зоне"""
         await interaction.response.send_modal(ZoneReportModal(ReportManager(database=self.bot.db_conn)))
+
+    @app_commands.command(name='my_reports', description='Выведет отчёты пользователя, подготовленные к отправке')
+    async def my_reports(self, interaction: discord.Interaction) -> None:
+        """Выведет отчёты пользователя, подготовленные к отправке"""
+        repo_man = ReportManager()
+        stashed_reports = repo_man.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id)
+        await interaction.response.defer(ephemeral=True)
+        if len(stashed_reports) == 0:
+            await interaction.followup.send(f'У вас не подготовлено отчётов', ephemeral=True)
+        else:
+            index = 0
+            for report in stashed_reports:
+                view = ui.View()
+                view.add_item(CommitButton(user_id=interaction.user.id,
+                                           guild_id=interaction.guild.id,
+                                           report_manager=repo_man,
+                                           index=index))
+                view.add_item(AmendButton(user_id=interaction.user.id,
+                                          guild_id=interaction.guild.id,
+                                          report_manager=repo_man,
+                                          index=index))
+                view.add_item(DeleteButton(user_id=interaction.user.id,
+                                           guild_id=interaction.guild.id,
+                                           report_manager=repo_man,
+                                           index=index))
+
+                await interaction.followup.send(f'Рапорт #{index}', embed=report.construct_embed(),
+                                                ephemeral=True, view=view)
+                index += 1
+
+    @app_commands.command(name='show_reports', description='Выведет все отчёты данного сервера, подготовленные к отправке')
+    async def show_reports(self, interaction: discord.Interaction) -> None:
+        """Выведет все отчёты данного сервера, подготовленные к отправке"""
+        report_man = ReportManager()
+        gid = interaction.guild.id
+        try:
+            users = report_man.fetch_guild_users(gid)
+        except KeyError:
+            await interaction.response.send_message(f'Отчётов не подготовлено', ephemeral=True)
+
+        await interaction.response.defer(ephemeral=True)
+
+        report_lists = list()
+        for user in users:
+            report_lists.append(report_man.fetch_reports(user_id=user, guild_id=gid))
+
+        for report_list in report_lists:
+            index = 0
+            for report in report_list:
+                response = f'Отчёт #{index} игрока {report.user}'
+                await interaction.followup.send(response, embed=report.construct_embed(), ephemeral=True)
+                index += 1
+
+
+
+
+
+
+
