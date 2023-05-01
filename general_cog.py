@@ -352,7 +352,8 @@ class GeneralCog(commands.Cog, name="General"):
         else:
             types = [ntype.value]
 
-        await interaction.response.defer(ephemeral=True)
+        embed_list = list()
         for itype in types:
-            embed = self.get_category_embed(ntype.name, itype, lang)
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            embed_list.append(self.get_category_embed(ntype.name, itype, lang))
+
+        await interaction.response.send_message(embeds=embed_list, ephemeral=True, delete_after=settings['timeout'])
