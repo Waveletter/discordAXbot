@@ -86,16 +86,6 @@ class ReportsCog(commands.Cog, name='Reports'):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
-    async def pstats(self, ctx, user=None) -> None:
-        """
-        Команда выводит статистику по указанному игроку
-        """
-        if user is None:
-            await ctx.reply(f"Статистика {ctx.author.mention}")
-        else:
-            await ctx.reply(f"Статистика {user}")
-
     @app_commands.command(name='report_zone', description='Команда для составления отчёта по зоне')
     async def report_zone(self, interaction: discord.Interaction) -> None:
         """Команда для составления отчёта по зоне"""

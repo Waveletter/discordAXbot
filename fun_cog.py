@@ -13,3 +13,13 @@ class DebugCog(commands.Cog, name="Miscellaneous"):
         await interaction.response.defer()
         await interaction.followup.send("First followup")
         await interaction.followup.send("Second followup")
+
+        @commands.hybrid_command()  # из ReportsCog
+        async def pstats(self, ctx, user=None) -> None:
+            """
+            Команда выводит статистику по указанному игроку
+            """
+            if user is None:
+                await ctx.reply(f"Статистика {ctx.author.mention}")
+            else:
+                await ctx.reply(f"Статистика {user}")
