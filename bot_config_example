@@ -11,8 +11,9 @@ settings = {
  'id': botid,
  'prefix': '!'
  'builds': 'builds.txt',
- 'notations': 'notations.txt',
+ 'notations': 'notation.txt',
  'db': 'bot_db.db',
  'tables': {'zone_reports': create_zone_reports_table},
- 'guilds': [discord.Object(id=guildid)]
+ 'guilds': [discord.Object(id=guildid)],
+ 'timeout': 60.0
 }
