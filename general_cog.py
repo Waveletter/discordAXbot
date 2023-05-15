@@ -242,21 +242,21 @@ class GeneralCog(commands.Cog, name="General"):
         if lang == 'en':
             embed.title = f'Расшифровка нотации {notation}'
             embed.add_field(name='Наименование корабля:', value=f'```{ship_name}```')
-            str = '```'
+            t_str = '```'
             for weapon in resulting_list:
-                str += f'{weapon[0]}x {weapon[1]}\n'
+                t_str += f'{weapon[0]}x {weapon[1]}\n'
                 #str += u'\n\u2060' #для сохранения пустой строки (избежание её обрезания)
-            str += '```'
-            embed.add_field(name='Вооружение:', value=str)
+            t_str += '```'
+            embed.add_field(name='Вооружение:', value=t_str)
         elif lang == 'ru':
             embed.title = f'Расшифровка нотации {notation}'
             embed.add_field(name='Наименование корабля:', value=f'```{ship_name_ru}```')
-            str = '```'
+            t_str = '```'
             for weapon in resulting_list:
-                str += f'{weapon[0]}x {weapon[2]}\n'
+                t_str += f'{weapon[0]}x {weapon[2]}\n'
                 #str += u'\n\u2060'  # для сохранения пустой строки (избежание её обрезания)
-            str += '```'
-            embed.add_field(name='Вооружение:', value=str)
+            t_str += '```'
+            embed.add_field(name='Вооружение:', value=t_str)
         else:
             print(lang)
             raise AttributeError(f'Неправильный езык {lang}')
