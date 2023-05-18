@@ -126,7 +126,7 @@ class ReportsCog(commands.Cog, name='Reports'):
         report_man = ReportManager()
         gid = interaction.guild.id
         try:
-            users = report_man.fetch_guild_users(gid)
+            users = report_man.fetch_guild_members(gid)
         except KeyError:
             await interaction.response.send_message(f'Отчётов не подготовлено', ephemeral=True)
 

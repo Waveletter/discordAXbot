@@ -38,14 +38,14 @@ class Queue:
     def full(self) -> bool:
         return len(self.list) == self.maxsize
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> object:
         return self.list[item]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> object:
         self.list[key] = value
         return value
 
-    def qsize(self):
+    def qsize(self) -> int:
         return len(self.list)
 
 
@@ -156,11 +156,11 @@ class ReportManager(object, metaclass=MetaSingleton):
         if reset is True:
             for db_table in db_tables:
                 if db_table not in tables:
-                    cur = self.db_conn.cursor()
+                    cur = self.db_conn.cursor()  # what the fuck does this code do
 
         for table in tables:
             if table not in db_tables:
-                settings['tables'][table](self.db_conn)  # В словаре должен быть передан валидный метод создания таблицы
+                settings['tables'][table](self.db_conn)  # В словаре должен быть передан валидный метод создания таблицы TODO: переделать
                 print(f'Created table {Fore.YELLOW + table}')
 
         print(f'Initialized Report Manager')
@@ -240,7 +240,7 @@ class ReportManager(object, metaclass=MetaSingleton):
     def fetch_guilds(self) -> tuple:
         return tuple(self._storage.keys())
 
-    def fetch_guild_users(self, guild: int) -> tuple:
+    def fetch_guild_members(self, guild: int) -> tuple:
         return tuple(self._storage[guild].keys())
 
     def is_present(self, uid: int, gid: int) -> bool:
@@ -362,7 +362,7 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
 
         return report
 
-    async def push_to_db(self, report: Report, /) -> None:
+    async def push_to_queue(self, report: Report, /) -> None:
         """Отправляет рапорт в менеджер для дальнейшей отправки в БД"""
         try:
             if self.report_to_edit is None:
@@ -394,7 +394,7 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
         report = await self.parse_args(user=name, guild=gname,
                                   user_id=uid, guild_id=gid, date=date)
 
-        await self.push_to_db(report)
+        await self.push_to_queue(report)
 
         # Чтобы инициализировать вебхук, нужно предварительно использовать response.defer()
         await interaction.response.defer()

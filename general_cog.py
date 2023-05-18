@@ -196,7 +196,6 @@ class GeneralCog(commands.Cog, name="General"):
 
         return amount, parsed[0], parsed[1]
 
-
     def decipher_notation(self, notation: str, lang: str = 'en') -> discord.Embed:
         weapon_list = list()
         embed = discord.Embed()
