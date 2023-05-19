@@ -12,6 +12,26 @@ import datetime
 ZoneReport = typing.NewType('ZoneReport', None)  # Forward declaration
 
 
+class ReportModal(ui.Modal, title='Report'):
+    def __init__(self, *, index: int = None, user_id: int = None, guild_id: int = None):
+        super().__init__()
+        self.report_to_edit = None
+        self.user_id = user_id
+        self.guild_id = guild_id
+
+    def set_uid(self, uid: int) -> None:
+        self.user_id = uid
+
+    def set_gid(self, gid: int) -> None:
+        self.guild_id = gid
+
+    def set_index(self, value: int) -> None:
+        self.report_to_edit = value
+
+    def get_index(self) -> int:
+        return self.report_to_edit
+
+
 class Queue:
     """"""
 
@@ -68,8 +88,8 @@ class Report:
         embed.add_field(name='Дата заполнения', value=self.date)
         return embed
 
-    def construct_modal(self) -> ui.Modal:
-        modal = ui.Modal()
+    def construct_modal(self) -> ReportModal:
+        modal = ReportModal()
         modal.add_item(ui.TextInput(label='Пользователь', placeholder=self.user, style=discord.TextStyle.short))
         modal.add_item(ui.TextInput(label='Сервер', placeholder=self.guild, style=discord.TextStyle.short))
         modal.add_item(ui.TextInput(label='Дата заполнения', placeholder=self.date, style=discord.TextStyle.short))
@@ -137,31 +157,17 @@ class ReportManager(object, metaclass=MetaSingleton):
     # REPORT_LIMIT_PER_GUILD = 1000
     TOTAL_LIMIT = 3000
 
-    def __init__(self, database: sqlite3.Connection = None, tables: dict = settings['tables'], reset: bool = False,
-                 guilds: list = settings['guilds']) -> None:
+    def __init__(self, database: sqlite3.Connection = None) -> None:
         """
         Инициализация менеджера
         :param database: Соединение с БД SQLite sqlite3.Connection
-        :param tables: Словарь имён таблиц и конструкторов таблиц
-        :param guilds: Список серверов
         """
         self._used_space = 0
         self._storage = dict()
 
         self.db_conn = database
-        self.tables = tables.keys()
         cur = self.db_conn.cursor()
         db_tables = cur.execute("SELECT name FROM sqlite_master").fetchall()
-
-        if reset is True:
-            for db_table in db_tables:
-                if db_table not in tables:
-                    cur = self.db_conn.cursor()  # what the fuck does this code do
-
-        for table in tables:
-            if table not in db_tables:
-                settings['tables'][table](self.db_conn)  # В словаре должен быть передан валидный метод создания таблицы TODO: переделать
-                print(f'Created table {Fore.YELLOW + table}')
 
         print(f'Initialized Report Manager')
 
@@ -253,7 +259,7 @@ class ReportManager(object, metaclass=MetaSingleton):
         return True
 
 
-class ZoneReportModal(ui.Modal, title='Zone Report'):
+class ZoneReportModal(ReportModal, title='Zone Report'):
     """
     Модалка для обработки репортов по зонам. Выдаёт окно взаимодействия, в которое записываются результаты закрытия зоны
     """
@@ -267,29 +273,18 @@ class ZoneReportModal(ui.Modal, title='Zone Report'):
                                 default='Woruas:CH2mg2sg;komsiant:K5msc',
                                 style=discord.TextStyle.long)
     timers = ui.TextInput(label='Фаза зоны-Время;',
-                          default='Фаза перехватчиков-01:50;Закрытие-49:50;1я гидра-01:34:21;2я гидра-01:52:43',
+                          default='П-01:50;З-49:50;1Г-01:34:21;2Г-01:52:43\n()',
                           style=discord.TextStyle.long)
     spawns = ui.TextInput(label='Тип таргоида:Количество;',
-                          default='Scout:43;Cyclops:4;Basilisk:2;Medusa:0;Hydra:2',
+                          default='S:43;G:5;C:4;B:2;M:0;H:2\n(S - Скауты, G - Глефы, ',
                           style=discord.TextStyle.short)
 
     # По умолчанию инициализироваться из настроек
-    def __init__(self, rep_manager=ReportManager(database=sqlite3.connect(settings['db']), tables=settings['tables']),
+    def __init__(self, rep_manager,
                  report_to_edit: int = None, uid: int = None, gid: int = None):
-        super().__init__()
+        super().__init__(index=report_to_edit, user_id=uid, guild_id=gid)
         self.manager = rep_manager
-        self.report_to_edit = report_to_edit
-        self.user_id = uid
-        self.guild_id = gid
 
-    def set_index(self, value: int) -> None:
-        self.report_to_edit = value
-
-    def set_uid(self, uid: int) -> None:
-        self.user_id = uid
-
-    def set_gid(self, gid: int) -> None:
-        self.guild_id = gid
 
     def set_place_plh(self, value: str) -> None:
         self.place.placeholder = value

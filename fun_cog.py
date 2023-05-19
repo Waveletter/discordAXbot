@@ -23,3 +23,9 @@ class DebugCog(commands.Cog, name="Miscellaneous"):
                 await ctx.reply(f"Статистика {ctx.author.mention}")
             else:
                 await ctx.reply(f"Статистика {user}")
+
+        @commands.command(name='get_gid', hidden=True)
+        @commands.is_owner()
+        async def get_gid(ctx: commands.Context):
+            print(f'{ctx.guild.id}')
+            await ctx.reply('GID Sent')
