@@ -27,6 +27,8 @@ weapon;msc;Modified Guardian Shard Cannon;Модифицированное Ос�
 weapon;mpc;Modified Guardian Plasma Cannon;Модифицированное Плазма-Орудие Стражей
 weapon;tvb;Thermal Vent Beam Laser;Лучевой Лазер с Тепловым Сбросом
 weapon;rfl;Remote Release Flak Launcher;Флак-Орудие
+weapon;pa;Plasma Accelerator;Ускоритель Плазмы
+weapon;rg;Railgun;Рельсотрон
 
 size;s;Small;Малое
 size;m;Medium;Среднее

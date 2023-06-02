@@ -10,7 +10,7 @@ class ReportButton(discord.ui.Button):
     def __init__(self, *, style=discord.ButtonStyle.secondary, label=None,
                  disabled=False, custom_id=None, url=None, emoji=None, row=None,
                  user_id: int = None, guild_id: int = None,
-                 report_manager: ReportManager = ReportManager(), index: int = None):
+                 report_manager: ReportManager, index: int = None):
         super().__init__(style=style, label=label, disabled=disabled,
                          custom_id=custom_id, url=url, emoji=emoji, row=row)
         self.uid = user_id
@@ -89,12 +89,12 @@ class ReportsCog(commands.Cog, name='Reports'):
     @app_commands.command(name='report_zone', description='Команда для составления отчёта по зоне')
     async def report_zone(self, interaction: discord.Interaction) -> None:
         """Команда для составления отчёта по зоне"""
-        await interaction.response.send_modal(ZoneReportModal(ReportManager(database=self.bot.db_conn)))
+        await interaction.response.send_modal(ZoneReportModal(self.bot.report_manager))
 
     @app_commands.command(name='my_reports', description='Выведет отчёты пользователя, подготовленные к отправке')
     async def my_reports(self, interaction: discord.Interaction) -> None:
         """Выведет отчёты пользователя, подготовленные к отправке"""
-        repo_man = ReportManager()
+        repo_man = self.bot.report_manager
         stashed_reports = repo_man.fetch_reports(user_id=interaction.user.id, guild_id=interaction.guild.id)
         await interaction.response.defer(ephemeral=True)
         if len(stashed_reports) == 0:
@@ -126,9 +126,10 @@ class ReportsCog(commands.Cog, name='Reports'):
         report_man = ReportManager()
         gid = interaction.guild.id
         try:
-            users = report_man.fetch_guild_users(gid)
+            users = report_man.fetch_guild_members(gid)
         except KeyError:
             await interaction.response.send_message(f'Отчётов не подготовлено', ephemeral=True)
+            return
 
         await interaction.response.defer(ephemeral=True)
 
@@ -142,10 +143,3 @@ class ReportsCog(commands.Cog, name='Reports'):
                 response = f'Отчёт #{index} игрока {report.user}'
                 await interaction.followup.send(response, embed=report.construct_embed(), ephemeral=True)
                 index += 1
-
-
-
-
-
-
-
