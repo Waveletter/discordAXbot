@@ -12,6 +12,7 @@ class GeneralCog(commands.Cog, name="General"):
 
     @commands.hybrid_command()
     async def ping(self, ctx):
+
         """
         Проверка доступности бота
         """
