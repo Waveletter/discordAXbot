@@ -1,3 +1,5 @@
+import sqlite3
+
 class Pilot:
     def __init__(self, *, id: int = -1, gid: int = -1, name: str = None, nick: str = None, guild: str = None,
                  roles: list = None):
@@ -28,5 +30,8 @@ class PilotHandler:
                   stat: PilotStatistic = PilotStatistic()) -> None:
 
         self.pilots.append((pilot, stat))
+
+    def load(self, table: str, db_cursor: sqlite3.Cursor):
+
 
 

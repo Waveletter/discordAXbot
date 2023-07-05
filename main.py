@@ -28,8 +28,6 @@ class BotHelp(commands.MinimalHelpCommand):
         await destination.send(embed=embed)
 
 
-
-
 class BotClient(commands.Bot):
 
     def __init__(self, command_prefix, intent, help, db: str, repo_manager: reports.ReportManager = None,
